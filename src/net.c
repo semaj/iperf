@@ -38,6 +38,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <arpa/inet.h>
 
 #ifdef HAVE_SENDFILE
 #ifdef linux
@@ -212,9 +213,11 @@ netdial(int domain, int proto, char *local, int local_port, char *server, int po
 int
 netannounce(int domain, int proto, char *local, int port)
 {
-    struct addrinfo hints, *res;
+    struct addrinfo hints, *res, *r;
     char portstr[6];
     int s, opt, saved_errno;
+
+    fprintf(stdout, "netannounce(domain = %d, protocol = %d, \"%s\", port = %d)\n", domain, proto, local, port);
 
     snprintf(portstr, 6, "%d", port);
     memset(&hints, 0, sizeof(hints));
@@ -239,7 +242,22 @@ netannounce(int domain, int proto, char *local, int port)
     hints.ai_socktype = proto;
     hints.ai_flags = AI_PASSIVE;
     if (getaddrinfo(local, portstr, &hints, &res) != 0)
-        return -1; 
+        return -1;
+
+    for (r = res; r; r = r->ai_next) {
+	char ipr[INET6_ADDRSTRLEN];
+	if (r->ai_family == AF_INET) {
+	    inet_ntop(r->ai_family, (void *) &((struct sockaddr_in *) r->ai_addr)->sin_addr, ipr, sizeof(ipr));
+	}
+	else if (r->ai_family == AF_INET6) {
+	    inet_ntop(r->ai_family, (void *) &((struct sockaddr_in6 *) r->ai_addr)->sin6_addr, ipr, sizeof(ipr));
+	}
+	else {
+	    strncpy(ipr, "Not AF_INET or AF_INET", sizeof(ipr));
+	}
+	
+	fprintf(stdout, "getaddrinfo: %s (%s)\n", ipr, r->ai_canonname);
+    }
 
     s = socket(res->ai_family, proto, 0);
     if (s < 0) {

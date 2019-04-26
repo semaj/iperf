@@ -38,6 +38,7 @@
 #endif
 #include <sys/time.h>
 #include <sys/select.h>
+#include <arpa/inet.h>
 
 #include "iperf.h"
 #include "iperf_api.h"
@@ -53,6 +54,30 @@
 #else
 # define PRIu64		"llu"
 #endif
+
+/*
+ * print_local_sock
+ * Print local socket address
+ */
+int
+print_local_sock(int s) {
+    struct sockaddr_storage sa_local;
+    socklen_t locallen;
+    getsockname(s, (struct sockaddr *) &sa_local, &locallen);
+    
+    char ipr[INET6_ADDRSTRLEN];
+    if (sa_local.ss_family == AF_INET) {
+	inet_ntop(sa_local.ss_family, (void *) &((struct sockaddr_in *) &sa_local)->sin_addr, ipr, sizeof(ipr));
+    }
+    else if (sa_local.ss_family == AF_INET6) {
+	inet_ntop(sa_local.ss_family, (void *) &((struct sockaddr_in6 *) &sa_local)->sin6_addr, ipr, sizeof(ipr));
+    }
+    else {
+	strncpy(ipr, "Not AF_INET or AF_INET", sizeof(ipr));
+    }
+    
+    fprintf(stdout, "print_local_sock: %s\n", ipr);
+}
 
 /* iperf_udp_recv
  *
@@ -353,6 +378,9 @@ iperf_udp_accept(struct iperf_test *test)
      */
     s = test->prot_listener;
 
+    fprintf(stdout, "iperf_udp_accept entry: ");
+    print_local_sock(s);
+    
     /*
      * Grab the UDP packet sent by the client.  From that we can extract the
      * client's address, and then use that information to bind the remote side
@@ -364,10 +392,16 @@ iperf_udp_accept(struct iperf_test *test)
         return -1;
     }
 
+    fprintf(stdout, "iperf_udp_accept after recvfrom(): ");
+    print_local_sock(s);
+
     if (connect(s, (struct sockaddr *) &sa_peer, len) < 0) {
         i_errno = IESTREAMACCEPT;
         return -1;
     }
+
+    fprintf(stdout, "iperf_udp_accept after connect(): ");
+    print_local_sock(s);
 
     /* Check and set socket buffer sizes */
     rc = iperf_udp_buffercheck(test, s);
@@ -448,6 +482,9 @@ int
 iperf_udp_listen(struct iperf_test *test)
 {
     int s;
+
+    /* Print test->bind_address */
+    fprintf(stdout, "test->bind_address %s\n", test->bind_address);
 
     if ((s = netannounce(test->settings->domain, Pudp, test->bind_address, test->server_port)) < 0) {
         i_errno = IESTREAMLISTEN;
