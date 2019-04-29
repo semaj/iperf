@@ -73,7 +73,7 @@ print_local_sock(int s) {
 	inet_ntop(sa_local.ss_family, (void *) &((struct sockaddr_in6 *) &sa_local)->sin6_addr, ipr, sizeof(ipr));
     }
     else {
-	strncpy(ipr, "Not AF_INET or AF_INET", sizeof(ipr));
+	snprintf(ipr, sizeof(ipr), "AF %d", sa_local.ss_family);
     }
     
     fprintf(stdout, "print_local_sock: %s\n", ipr);
