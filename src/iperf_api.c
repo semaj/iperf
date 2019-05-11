@@ -71,7 +71,7 @@
 #include "iperf.h"
 #include "iperf_api.h"
 #include "iperf_udp.h"
-#include "iperf_tcp.h"
+/*#include "iperf_tcp.h"*/
 #if defined(HAVE_SCTP)
 #include "iperf_sctp.h"
 #endif /* HAVE_SCTP */
@@ -2216,7 +2216,7 @@ protocol_free(struct protocol *proto)
 int
 iperf_defaults(struct iperf_test *testp)
 {
-    struct protocol *tcp, *udp;
+    struct protocol *udp;
 #if defined(HAVE_SCTP)
     struct protocol *sctp;
 #endif /* HAVE_SCTP */
@@ -2266,23 +2266,23 @@ iperf_defaults(struct iperf_test *testp)
     SLIST_INIT(&testp->streams);
     SLIST_INIT(&testp->protocols);
 
-    tcp = protocol_new();
-    if (!tcp)
-        return -1;
+    /*tcp = protocol_new();*/
+    /*if (!tcp)*/
+        /*return -1;*/
 
-    tcp->id = Ptcp;
-    tcp->name = "TCP";
-    tcp->accept = iperf_tcp_accept;
-    tcp->listen = iperf_tcp_listen;
-    tcp->connect = iperf_tcp_connect;
-    tcp->send = iperf_tcp_send;
-    tcp->recv = iperf_tcp_recv;
-    tcp->init = NULL;
-    SLIST_INSERT_HEAD(&testp->protocols, tcp, protocols);
+    /*tcp->id = Ptcp;*/
+    /*tcp->name = "TCP";*/
+    /*tcp->accept = iperf_tcp_accept;*/
+    /*tcp->listen = iperf_tcp_listen;*/
+    /*tcp->connect = iperf_tcp_connect;*/
+    /*tcp->send = iperf_tcp_send;*/
+    /*tcp->recv = iperf_tcp_recv;*/
+    /*tcp->init = NULL;*/
+    /*SLIST_INSERT_HEAD(&testp->protocols, tcp, protocols);*/
 
     udp = protocol_new();
     if (!udp) {
-        protocol_free(tcp);
+        /*protocol_free(tcp);*/
         return -1;
     }
 
@@ -2294,7 +2294,8 @@ iperf_defaults(struct iperf_test *testp)
     udp->send = iperf_udp_send;
     udp->recv = iperf_udp_recv;
     udp->init = iperf_udp_init;
-    SLIST_INSERT_AFTER(tcp, udp, protocols);
+    /*SLIST_INSERT_AFTER(tcp, udp, protocols);*/
+    SLIST_INSERT_HEAD(&testp->protocols, udp, protocols);
 
     set_protocol(testp, Ptcp);
 
